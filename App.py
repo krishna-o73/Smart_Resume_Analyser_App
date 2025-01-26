@@ -1,9 +1,8 @@
 import streamlit as st
 import nltk
 import spacy
+from spacy import prefer_gpu
 nltk.download('stopwords')
-spacy.load('en_core_web_sm')
-
 import pandas as pd
 import base64, random
 import time, datetime
@@ -21,10 +20,29 @@ from Courses import ds_course, web_course, android_course, ios_course, uiux_cour
 import pafy
 import plotly.express as px
 import youtube_dl
+# Define custom functions directly in this file
+def custom_init(nlp):
+    # Custom initialization code
+    print("Custom initialization after model creation.")
+    return nlp
 
-def fetch_yt_video(link):
-    video = pafy.new(link)
-    return video.title
+def custom_pipeline_setup(nlp):
+    # Custom pipeline setup code
+    print("Custom pipeline setup after creation.")
+    return nlp
+
+# Set the Streamlit page config as the first command
+st.set_page_config(page_title="Smart Resume Analyzer", layout="wide")
+
+# Optionally prefer GPU if available
+prefer_gpu()
+
+# Load the spaCy model
+nlp = spacy.load('en_core_web_sm')  # Or any other model
+
+# Apply custom initialization and setup
+nlp = custom_init(nlp)
+nlp = custom_pipeline_setup(nlp)
 
 
 def get_table_download_link(df, filename, text):
@@ -81,7 +99,7 @@ def course_recommender(course_list):
     return rec_course
 
 
-connection = pymysql.connect(host='localhost', user='root', password='')
+connection = pymysql.connect(host='localhost', user='root', password='sai@934630')
 cursor = connection.cursor()
 
 
@@ -97,19 +115,12 @@ def insert_data(name, email, res_score, timestamp, no_of_pages, reco_field, cand
     connection.commit()
 
 
-st.set_page_config(
-    page_title="Smart Resume Analyzer",
-    page_icon='./Logo/SRA_Logo.ico',
-)
-
 
 def run():
     st.title("Smart Resume Analyser")
     st.sidebar.markdown("# Choose User")
     activities = ["Normal User", "Admin"]
     choice = st.sidebar.selectbox("Choose among the given options:", activities)
-    # link = '[©Developed by Spidy20](http://github.com/spidy20)'
-    # st.sidebar.markdown(link, unsafe_allow_html=True)
     img = Image.open('./Logo/SRA_Logo.jpg')
     img = img.resize((250, 250))
     st.image(img)
@@ -371,19 +382,7 @@ def run():
                             str(resume_data['no_of_pages']), reco_field, cand_level, str(resume_data['skills']),
                             str(recommended_skills), str(rec_course))
 
-                ## Resume writing video
-                st.header("**Bonus Video for Resume Writing Tips💡**")
-                resume_vid = random.choice(resume_videos)
-                res_vid_title = fetch_yt_video(resume_vid)
-                st.subheader("✅ **" + res_vid_title + "**")
-                st.video(resume_vid)
-
-                ## Interview Preparation Video
-                st.header("**Bonus Video for Interview👨‍💼 Tips💡**")
-                interview_vid = random.choice(interview_videos)
-                int_vid_title = fetch_yt_video(interview_vid)
-                st.subheader("✅ **" + int_vid_title + "**")
-                st.video(interview_vid)
+                
 
                 connection.commit()
             else:
@@ -396,8 +395,8 @@ def run():
         ad_user = st.text_input("Username")
         ad_password = st.text_input("Password", type='password')
         if st.button('Login'):
-            if ad_user == 'machine_learning_hub' and ad_password == 'mlhub123':
-                st.success("Welcome Kushal")
+            if ad_user == 'saikrishna' and ad_password == 'sai@934630':
+                st.success("Welcome Saikrishna")
                 # Display Data
                 cursor.execute('''SELECT*FROM user_data''')
                 data = cursor.fetchall()
@@ -408,24 +407,7 @@ def run():
                 st.dataframe(df)
                 st.markdown(get_table_download_link(df, 'User_Data.csv', 'Download Report'), unsafe_allow_html=True)
                 ## Admin Side Data
-                query = 'select * from user_data;'
-                plot_data = pd.read_sql(query, connection)
 
-                ## Pie chart for predicted field recommendations
-                labels = plot_data.Predicted_Field.unique()
-                print(labels)
-                values = plot_data.Predicted_Field.value_counts()
-                print(values)
-                st.subheader("📈 **Pie-Chart for Predicted Field Recommendations**")
-                fig = px.pie(df, values=values, names=labels, title='Predicted Field according to the Skills')
-                st.plotly_chart(fig)
-
-                ### Pie chart for User's👨‍💻 Experienced Level
-                labels = plot_data.User_level.unique()
-                values = plot_data.User_level.value_counts()
-                st.subheader("📈 ** Pie-Chart for User's👨‍💻 Experienced Level**")
-                fig = px.pie(df, values=values, names=labels, title="Pie-Chart📈 for User's👨‍💻 Experienced Level")
-                st.plotly_chart(fig)
 
 
             else:
